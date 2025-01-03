@@ -8,13 +8,15 @@ import java.util.stream.Collectors;
 
 public final class MyUtils {
 
-    private MyUtils() {
-    }
-
-    public static List<String> getInputLines(String pathToFile) throws IOException {
+    public static List<String> getInputLines(String pathToFile) {
         try (FileReader fileReader = new FileReader(pathToFile);
              BufferedReader br = new BufferedReader(fileReader)) {
             return br.lines().collect(Collectors.toList());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
+    }
+
+    private MyUtils() {
     }
 }
