@@ -176,8 +176,8 @@ public class Day12 {
                     int row = currentOne / COLS;
                     int col = currentOne % COLS;
 
-                    if(currentVertexRow == row && Math.abs(currentVertex - currentOne) == 1) howManyOneDiff++;
-                    if(currentVertexCol == col && Math.abs(currentVertex - currentOne) == COLS) howManyRowDiff++;
+                    if (currentVertexRow == row && Math.abs(currentVertex - currentOne) == 1) howManyOneDiff++;
+                    if (currentVertexCol == col && Math.abs(currentVertex - currentOne) == COLS) howManyRowDiff++;
 
                 }
             }
@@ -194,11 +194,121 @@ public class Day12 {
             System.out.println("price = " + price);
         }
         System.out.println("PART I: summaryPrice = " + summaryPrice);
-
     }
 
     public static void partTwo() {
 
+        /**
+         * The region containing type A plants has 4 sides, as does each of the regions containing plants
+         * of type B, D, and E. However, the more complex region containing the plants of type C has 8 sides!
+         *
+         * Using the new method of calculating the per-region price by multiplying the region's area by its
+         * number of sides, regions A through E have prices 16, 16, 32, 4, and 12, respectively, for a total price of 80.
+         */
+
+        System.out.println("\nPART II:");
+        List<Integer>[] lists = GARDEN_AS_GRAPH.goBfsForAllVertices();
+        Set<List<Integer>> set = new HashSet<>(Arrays.asList(lists).subList(0, GARDEN_AS_GRAPH.getVertices()));
+        System.out.println("set = " + set);
+
+        int summaryPrice = 0;
+        int howManyLess = 0;
+        for (List<Integer> currentList : set) {
+            int region = currentList.size();
+
+            howManyLess = 0;
+            int howManyOneDiff = 0;
+            int howManyRowDiff = 0;
+            for (int i = 0; i < region; i++) {
+                int currentVertex = currentList.get(i);
+                int currentVertexRow = currentVertex / COLS;
+                int currentVertexCol = currentVertex % COLS;
+                char currentChar = GARDEN_AS_MATRIX[currentVertexRow][currentVertexCol];
+
+
+                for (int j = i; j < region; j++) {
+                    int currentOne = currentList.get(j);
+                    int currentOneRow = currentOne / COLS;
+                    int currentOneCol = currentOne % COLS;
+
+
+                    if (currentVertexRow == currentOneRow && Math.abs(currentVertex - currentOne) == 1) howManyOneDiff++;
+                    if (currentVertexCol == currentOneCol && Math.abs(currentVertex - currentOne) == COLS) howManyRowDiff++;
+
+                    boolean currentLeft = false;
+                    boolean currentRight = false;
+                    boolean nextLeft = false;
+                    boolean nextRight = false;
+                    int diff = Math.abs(currentVertex - currentOne);
+                    if (diff == COLS) {
+
+                        if (currentVertexCol == 0) {
+                            currentRight = true;
+                            nextRight = true;
+
+                            currentLeft = GARDEN_AS_MATRIX[currentVertexRow][currentVertexCol + 1] != currentChar;
+                            nextLeft = GARDEN_AS_MATRIX[currentVertexRow + 1][currentVertexCol + 1] != currentChar;
+
+                        } else if (currentVertexCol == (COLS - 1) && (currentVertexCol == currentOneCol)) {
+                            currentLeft = true;
+                            nextLeft = true;
+
+                            currentRight = GARDEN_AS_MATRIX[currentVertexRow][currentVertexCol - 1] != currentChar;
+                            nextRight = GARDEN_AS_MATRIX[currentVertexRow + 1][currentVertexCol - 1] != currentChar;
+
+                        } else {
+                            currentLeft = GARDEN_AS_MATRIX[currentVertexRow][currentVertexCol + 1] != currentChar;
+                            nextLeft = GARDEN_AS_MATRIX[currentVertexRow + 1][currentVertexCol + 1] != currentChar;
+
+                            currentRight = GARDEN_AS_MATRIX[currentVertexRow][currentVertexCol - 1] != currentChar;
+                            nextRight = GARDEN_AS_MATRIX[currentVertexRow + 1][currentVertexCol - 1] != currentChar;
+                        }
+
+                        if (currentLeft && nextLeft) howManyLess++;
+                        if (currentRight && nextRight) howManyLess++;
+
+
+                    } else if (diff == 1 && (currentVertexRow == currentOneRow)) {
+                        if (currentVertexRow == 0) {
+                            currentLeft = true;
+                            nextLeft = true;
+
+                            currentRight = GARDEN_AS_MATRIX[currentVertexRow + 1][currentVertexCol] != currentChar;
+                            nextRight = GARDEN_AS_MATRIX[currentVertexRow + 1][currentVertexCol + 1] != currentChar;
+
+                        } else if (currentVertexRow == (ROWS - 1)) {
+                            currentRight = true;
+                            nextRight = true;
+
+                            currentLeft = GARDEN_AS_MATRIX[currentVertexRow - 1][currentVertexCol] != currentChar;
+                            nextLeft = GARDEN_AS_MATRIX[currentVertexRow - 1][currentVertexCol + 1] != currentChar;
+
+                        } else {
+                            currentLeft = GARDEN_AS_MATRIX[currentVertexRow - 1][currentVertexCol] != currentChar;
+                            nextLeft = GARDEN_AS_MATRIX[currentVertexRow - 1][currentVertexCol + 1] != currentChar;
+
+                            currentRight = GARDEN_AS_MATRIX[currentVertexRow + 1][currentVertexCol] != currentChar;
+                            nextRight = GARDEN_AS_MATRIX[currentVertexRow + 1][currentVertexCol + 1] != currentChar;
+                        }
+
+                        if (currentLeft && nextLeft) howManyLess++;
+                        if (currentRight && nextRight) howManyLess++;
+                    }
+
+                }
+            }
+            int defaultPerimeter = region * 4 - howManyOneDiff * 2 - howManyRowDiff * 2;
+            System.out.println("\ncurrentList = " + currentList);
+            int perimeter = defaultPerimeter - howManyLess;
+            System.out.println("howManyLess = " + howManyLess);
+            System.out.println("perimeter = " + perimeter);
+            System.out.println("region = " + region);
+            int price = perimeter * region;
+            System.out.println("price = " + price);
+            summaryPrice+=price;
+
+        }
+        System.out.println("PART II: summaryPrice = " + summaryPrice);
     }
 
     private static void prepareData(final List<String> inputLines) {
