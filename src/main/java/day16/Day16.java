@@ -29,9 +29,6 @@ public class Day16 {
     private static char[][] MAP_AS_MATRIX;
 
 
-    record Edge(int from, int to) {
-    }
-
     record State(int node, Direction direction) {
     }
 
@@ -56,7 +53,6 @@ public class Day16 {
         }
 
         void addEdge(int from, int to) {
-            Edge edge = new Edge(from, to);
             adjacencyListAsSet[from].add(to);
             adjacencyListAsSet[to].add(from);
         }
@@ -67,7 +63,6 @@ public class Day16 {
 
         public List<List<Integer>> getAllPathsPossibleFromTo(int from, int to) {
             List<List<Integer>> pathsFromTo = new ArrayList<>();
-
             Queue<List<Integer>> pathsQueue = new ArrayDeque<>();
             pathsQueue.add(List.of(from));
             while (!pathsQueue.isEmpty()) {
@@ -181,6 +176,7 @@ public class Day16 {
     private static int getLowestPointsFromStartToEndWithDijkstra(int startNode, int endNode) {
         PriorityQueue<StateCost> queue = new PriorityQueue<>(Comparator.comparingInt(StateCost::cost));
         Map<State, Integer> stateCostMap = new HashMap<>();
+        Map<State, List<State>> previousStatesMap = new HashMap<>(); // part 2
 
         State startState = new State(startNode, START_DIRECTION);
         stateCostMap.put(startState, 0);
@@ -193,7 +189,6 @@ public class Day16 {
             if (currentCost > stateCostMap.get(currentState)) {
                 continue;
             }
-
             for (int nextNode : MAP_AS_GRAPH.getAdjacencySet(currentState.node())) {
                 Direction nextDirection = getNextDirection(nextNode - currentState.node());
                 int newCost = currentCost + ONE_TILE_COST;
@@ -201,19 +196,47 @@ public class Day16 {
                     newCost += NINETY_DEGREE_ROTATION_COST;
                 }
                 State nextState = new State(nextNode, nextDirection);
-                if (newCost < stateCostMap.getOrDefault(nextState, Integer.MAX_VALUE)) {
+                int oldCost = stateCostMap.getOrDefault(nextState, Integer.MAX_VALUE);
+                if (newCost < oldCost) {
                     stateCostMap.put(nextState, newCost);
+                    previousStatesMap.put(nextState, new ArrayList<>(List.of(currentState))); // part2
                     queue.add(new StateCost(nextState, newCost));
+                } else if (newCost == oldCost) {
+                    previousStatesMap.get(nextState).add(currentState); // part2
                 }
             }
-
-
         }
-        return stateCostMap.entrySet().stream()
-                .filter(entry -> entry.getKey().node() == END_NODE)
+        int lowestPoints = stateCostMap.entrySet().stream()
+                .filter(entry -> entry.getKey().node() == endNode)
                 .mapToInt(Map.Entry::getValue)
                 .min()
                 .orElse(Integer.MAX_VALUE);
+
+
+        // -------------- PART II ------------------
+        List<State> endStates = stateCostMap.entrySet().stream()
+                .filter(entrySet -> entrySet.getKey().node() == endNode)
+                .filter(entrySet -> entrySet.getValue() == lowestPoints)
+                .map(Map.Entry::getKey)
+                .toList();
+
+        Set<Integer> nodes = new HashSet<>();
+        Set<State> visitedStates = new HashSet<>();
+        Deque<State> statesStack = new ArrayDeque<>(endStates);
+        while (!statesStack.isEmpty()) {
+            State currentState = statesStack.pop();
+            if (!visitedStates.add(currentState)) continue;
+            nodes.add(currentState.node());
+            if (currentState.equals(startState)) continue;
+            if (previousStatesMap.containsKey(currentState)) {
+                statesStack.addAll(previousStatesMap.get(currentState));
+            }
+        }
+        System.out.println("PART II:");
+        System.out.println("nodes.size() = " + nodes.size());
+        // -------------- PART II ------------------
+
+        return lowestPoints;
     }
 
     private void printOutPaths(List<List<Integer>> paths) {
@@ -228,12 +251,12 @@ public class Day16 {
     }
 
     private static void partOne() {
-        System.out.println("PART I:");
+//        System.out.println("PART I:");
 //        List<List<Integer>> pathsFromStartToEnd = MAP_AS_GRAPH.getAllPathsPossibleFromTo(START_NODE, EMD_NODE);
 //        System.out.println("pathsFromStartToEnd.size() = " + pathsFromStartToEnd.size());
 //        int result = getLowestPointsToGetFromStartToEnd(pathsFromStartToEnd);
         int lowestPoints = getLowestPointsFromStartToEndWithDijkstra(START_NODE, END_NODE);
-        System.out.println("lowestPoints = " + lowestPoints);
+        System.out.println("PART I: lowestPoints = " + lowestPoints);
     }
 
 

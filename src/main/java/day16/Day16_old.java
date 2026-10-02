@@ -5,7 +5,7 @@ import utils.MyUtils;
 import java.io.IOException;
 import java.util.*;
 
-public class Day16_notes {
+public class Day16_old {
 
 
     enum Dir {
