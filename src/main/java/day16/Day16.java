@@ -22,7 +22,7 @@ public class Day16 {
     };
 
     private static int START_NODE;
-    private static int EMD_NODE;
+    private static int END_NODE;
     private static int ROWS;
     private static int COLS;
     private static Graph MAP_AS_GRAPH;
@@ -30,12 +30,16 @@ public class Day16 {
 
 
     record Edge(int from, int to) {
+    }
 
+    record State(int node, Direction direction) {
+    }
+
+    record StateCost(State state, int cost) {
     }
 
     enum Direction {
         SOUTH, NORTH, EAST, WEST
-
     }
 
 
@@ -106,7 +110,7 @@ public class Day16 {
             }
             System.out.println();
         }
-        System.out.println("EMD_NODE = " + EMD_NODE);
+        System.out.println("EMD_NODE = " + END_NODE);
         System.out.println("START_NODE = " + START_NODE);
     }
 
@@ -124,7 +128,7 @@ public class Day16 {
 
                 int currentIndex = i * COLS + j;
                 if (currentTile == START_TILE) START_NODE = currentIndex;
-                if (currentTile == END_TILE) EMD_NODE = currentIndex;
+                if (currentTile == END_TILE) END_NODE = currentIndex;
 
                 // mapping up/down/right/left connections in the matrix
                 for (int[] direction : MATRIX_NEIGHBOURS) {
@@ -142,10 +146,10 @@ public class Day16 {
     }
 
 
-    private static int getLowestPointsToGetFromStartToEnd(List<List<Integer>> pathsFromStartToEnd) {
+    private static int getLowestPointsToGetFromStartToEndFromPathList(List<List<Integer>> pathsFromStartToEnd) {
         int lowestPoints = Integer.MAX_VALUE;
         for (List<Integer> path : pathsFromStartToEnd) {
-            int pointsFromPath = getPointsFromPath(path);
+            int pointsFromPath = getPointsFromOnePath(path);
 //            System.out.println("pointsFromPath = " + pointsFromPath);
             lowestPoints = Math.min(lowestPoints, pointsFromPath);
         }
@@ -160,14 +164,13 @@ public class Day16 {
         throw new IllegalArgumentException("Invalid move: " + diff);
     }
 
-    private static int getPointsFromPath(List<Integer> path) {
+    private static int getPointsFromOnePath(List<Integer> path) {
         int points = 0;
         Direction currentDirection = START_DIRECTION;
         for (int i = 0; i < path.size() - 1; i++) {
             int currentNode = path.get(i);
             int nextNode = path.get(i + 1);
             Direction nextDirection = getNextDirection(nextNode - currentNode);
-
             if (currentDirection != nextDirection) points += NINETY_DEGREE_ROTATION_COST;
             points += ONE_TILE_COST;
             currentDirection = nextDirection;
@@ -175,26 +178,67 @@ public class Day16 {
         return points;
     }
 
+    private static int getLowestPointsFromStartToEndWithDijkstra(int startNode, int endNode) {
+        PriorityQueue<StateCost> queue = new PriorityQueue<>(Comparator.comparingInt(StateCost::cost));
+        Map<State, Integer> stateCostMap = new HashMap<>();
+
+        State startState = new State(startNode, START_DIRECTION);
+        stateCostMap.put(startState, 0);
+        queue.add(new StateCost(startState, 0));
+
+        while (!queue.isEmpty()) {
+            StateCost currentStateCost = queue.poll();
+            State currentState = currentStateCost.state();
+            int currentCost = currentStateCost.cost();
+            if (currentCost > stateCostMap.get(currentState)) {
+                continue;
+            }
+
+            for (int nextNode : MAP_AS_GRAPH.getAdjacencySet(currentState.node())) {
+                Direction nextDirection = getNextDirection(nextNode - currentState.node());
+                int newCost = currentCost + ONE_TILE_COST;
+                if (currentState.direction() != nextDirection) {
+                    newCost += NINETY_DEGREE_ROTATION_COST;
+                }
+                State nextState = new State(nextNode, nextDirection);
+                if (newCost < stateCostMap.getOrDefault(nextState, Integer.MAX_VALUE)) {
+                    stateCostMap.put(nextState, newCost);
+                    queue.add(new StateCost(nextState, newCost));
+                }
+            }
+
+
+        }
+        return stateCostMap.entrySet().stream()
+                .filter(entry -> entry.getKey().node() == END_NODE)
+                .mapToInt(Map.Entry::getValue)
+                .min()
+                .orElse(Integer.MAX_VALUE);
+    }
+
+    private void printOutPaths(List<List<Integer>> paths) {
+        System.out.println("paths = ");
+        for (List<Integer> path : paths) {
+            for (int i = 0; i < path.size(); i++) {
+                System.out.print(path.get(i));
+                if (i < path.size() - 1) System.out.print(" -> ");
+            }
+            System.out.println();
+        }
+    }
 
     private static void partOne() {
         System.out.println("PART I:");
-        List<List<Integer>> pathsFromStartToEnd = MAP_AS_GRAPH.getAllPathsPossibleFromTo(START_NODE, EMD_NODE);
-//        System.out.println("pathsFromStartToEnd = ");
-//        for (List<Integer> path : pathsFromStartToEnd) {
-//            for (int i = 0; i < path.size(); i++) {
-//                System.out.print(path.get(i));
-//                if (i < path.size() - 1) System.out.print(" -> ");
-//            }
-//            System.out.println();
-//        }
-        System.out.println("pathsFromStartToEnd.size() = " + pathsFromStartToEnd.size());
-        int result = getLowestPointsToGetFromStartToEnd(pathsFromStartToEnd);
-        System.out.println("result = " + result);
+//        List<List<Integer>> pathsFromStartToEnd = MAP_AS_GRAPH.getAllPathsPossibleFromTo(START_NODE, EMD_NODE);
+//        System.out.println("pathsFromStartToEnd.size() = " + pathsFromStartToEnd.size());
+//        int result = getLowestPointsToGetFromStartToEnd(pathsFromStartToEnd);
+        int lowestPoints = getLowestPointsFromStartToEndWithDijkstra(START_NODE, END_NODE);
+        System.out.println("lowestPoints = " + lowestPoints);
     }
 
 
     static void main() {
-        String pathToInputFile = "src/main/resources/2024.day16/input1.txt";
+        String pathToInputFile = "src/main/resources/2024.day16/input.txt";
         List<String> inputLines = MyUtils.getInputLines(pathToInputFile);
 
         prepareData(inputLines);
