@@ -6,18 +6,19 @@ import java.util.*;
 
 public class Day18 {
 
-    // test data
+    // data for test input
 //    private static final int ROWS = 7;
 //    private static final int COLS = 7;
 //    private static final int NUMBER_OF_FALLEN_BYTES = 12;
 
+
     private static final int ROWS = 71;
     private static final int COLS = 71;
-    private static final int NUMBER_OF_FALLEN_BYTES = 1024;
-
+    private static final int NUMBER_OF_ALREADY_FALLEN_BYTES = 1024;
     private static final int ONE_MOVE_COST = 1;
-    private static final int START_NODE = 0;
-    private static final int END_NODE = ROWS * COLS - 1;
+    private static final int START_NODE_INDEX = 0;
+    private static final int END_NODE_INDEX = ROWS * COLS - 1;
+    private static final List<List<Integer>> LIST_OF_ALL_POSSIBLE_FALLEN_BYTES_COORDINATES = new ArrayList<>();
     private static final int[][] MATRIX_NEIGHBOURS = {
             {-1, 0}, // up
             {1, 0},  // down
@@ -93,43 +94,60 @@ public class Day18 {
             counterOfFallenBytes++;
             int coordCol = Integer.parseInt(coords[0]);
             int coordRow = Integer.parseInt(coords[1]);
-            int vertexIndex = coordRow * COLS + coordCol;
-            MEMORY_AS_GRAPH.removeNodeFromAdjacency(vertexIndex);
-            if (counterOfFallenBytes == NUMBER_OF_FALLEN_BYTES) break;
+            LIST_OF_ALL_POSSIBLE_FALLEN_BYTES_COORDINATES.add(List.of(coordRow, coordCol));
+
+            if (counterOfFallenBytes <= NUMBER_OF_ALREADY_FALLEN_BYTES) {
+                int vertexIndex = coordRow * COLS + coordCol;
+                MEMORY_AS_GRAPH.removeNodeFromAdjacency(vertexIndex);
+            }
         }
 //        System.out.println("MEMORY_AS_GRAPH = " + MEMORY_AS_GRAPH);
     }
 
-    // start with the least expensive node and using that value -> reduce (if possible) neighbours' costs
+    // start with the least expensive node and using that value -> reduce (if possible) neighbours costs
     private static int getShortestPathWithDijkstra() {
         Map<Integer, Integer> distancesMap = new HashMap<>();
-        distancesMap.put(START_NODE, 0);
+        distancesMap.put(START_NODE_INDEX, 0);
+        distancesMap.put(END_NODE_INDEX, Integer.MAX_VALUE); // part2
         PriorityQueue<Node> nodeQueue = new PriorityQueue<>(Comparator.comparing(Node::distanceFromStart));
-        nodeQueue.add(new Node(START_NODE, 0));
+        nodeQueue.add(new Node(START_NODE_INDEX, 0));
 
         while (!nodeQueue.isEmpty()) {
             Node currentNode = nodeQueue.poll();
             int currentNodeDist = currentNode.distanceFromStart();
 
             for (int currentNeighbour : MEMORY_AS_GRAPH.getAdjaccencySet(currentNode.nodeIndex())) {
-                int newDistForNeighbour = currentNodeDist + ONE_MOVE_COST;
                 int oldDistForNeighbour = distancesMap.getOrDefault(currentNeighbour, Integer.MAX_VALUE);
-
+                int newDistForNeighbour = currentNodeDist + ONE_MOVE_COST;
                 if (newDistForNeighbour < oldDistForNeighbour) {
                     distancesMap.put(currentNeighbour, newDistForNeighbour);
                     nodeQueue.add(new Node(currentNeighbour, newDistForNeighbour));
                 }
-
             }
         }
-        return distancesMap.get(END_NODE);
+        return distancesMap.get(END_NODE_INDEX);
     }
+
 
     private static void partOne() {
         int shortestPathSteps = getShortestPathWithDijkstra();
-        System.out.println("PART I: " + shortestPathSteps);
+        System.out.println("PART I = " + shortestPathSteps);
     }
 
+
+    private static void partTwo() {
+        int allBytesSize = LIST_OF_ALL_POSSIBLE_FALLEN_BYTES_COORDINATES.size();
+        for (int i = NUMBER_OF_ALREADY_FALLEN_BYTES - 1; i < allBytesSize; i++) {
+            int currentRow = LIST_OF_ALL_POSSIBLE_FALLEN_BYTES_COORDINATES.get(i).getFirst();
+            int currentCol = LIST_OF_ALL_POSSIBLE_FALLEN_BYTES_COORDINATES.get(i).getLast();
+            MEMORY_AS_GRAPH.removeNodeFromAdjacency(currentRow * COLS + currentCol);
+            int currentShortest = getShortestPathWithDijkstra();
+            if (currentShortest == Integer.MAX_VALUE) {
+                System.out.println("PART II = " + currentCol + "," + currentRow);
+                break;
+            }
+        }
+    }
 
     static void main() {
         String pathToFile = "src/main/resources/2024.day18/input.txt";
@@ -137,6 +155,7 @@ public class Day18 {
 
         prepareData(inputLines);
         partOne();
+        partTwo();
     }
 
 }
