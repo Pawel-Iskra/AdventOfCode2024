@@ -54,13 +54,10 @@ public class Day18 {
         }
 
         public void removeNodeFromAdjacency(int vertex) {
-            for (int[] direction : MATRIX_NEIGHBOURS) {
-                int neighbourRow = vertex / COLS + direction[0];
-                int neighbourCol = vertex % COLS + direction[1];
-                if (neighbourRow >= 0 && neighbourRow < ROWS && neighbourCol >= 0 && neighbourCol < COLS) {
-                    adjacencySets[neighbourRow * COLS + neighbourCol].remove(vertex);
-                }
+            for (int neighbour : getAdjaccencySet(vertex)) {
+                adjacencySets[neighbour].remove(vertex);
             }
+            adjacencySets[vertex].clear();
         }
 
         @Override
@@ -105,10 +102,10 @@ public class Day18 {
     }
 
     // start with the least expensive node and using that value -> reduce (if possible) neighbours costs
+    // fun fact: if move between any nodes is constant cost -> BFS is enough
     private static int getShortestPathWithDijkstra() {
-        Map<Integer, Integer> distancesMap = new HashMap<>();
-        distancesMap.put(START_NODE_INDEX, 0);
-        distancesMap.put(END_NODE_INDEX, Integer.MAX_VALUE); // part2
+        int[] distances = new int[ROWS * COLS];
+        distances[END_NODE_INDEX] = Integer.MAX_VALUE; // part2
         PriorityQueue<Node> nodeQueue = new PriorityQueue<>(Comparator.comparing(Node::distanceFromStart));
         nodeQueue.add(new Node(START_NODE_INDEX, 0));
 
@@ -117,15 +114,15 @@ public class Day18 {
             int currentNodeDist = currentNode.distanceFromStart();
 
             for (int currentNeighbour : MEMORY_AS_GRAPH.getAdjaccencySet(currentNode.nodeIndex())) {
-                int oldDistForNeighbour = distancesMap.getOrDefault(currentNeighbour, Integer.MAX_VALUE);
+                int oldDistForNeighbour = distances[currentNeighbour] == 0 ? Integer.MAX_VALUE : distances[currentNeighbour];
                 int newDistForNeighbour = currentNodeDist + ONE_MOVE_COST;
                 if (newDistForNeighbour < oldDistForNeighbour) {
-                    distancesMap.put(currentNeighbour, newDistForNeighbour);
+                    distances[currentNeighbour] = newDistForNeighbour;
                     nodeQueue.add(new Node(currentNeighbour, newDistForNeighbour));
                 }
             }
         }
-        return distancesMap.get(END_NODE_INDEX);
+        return distances[END_NODE_INDEX];
     }
 
 
