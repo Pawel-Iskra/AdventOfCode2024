@@ -77,21 +77,18 @@ public class Day18 {
 
     // start with the least expensive node and using that value -> reduce (if possible) neighbours costs
     // fun fact: if move between any nodes is constant cost -> BFS is enough
-
     private static int getShortestPathWithDijkstra() {
         int[] distances = new int[ROWS * COLS];
-        distances[END_NODE_INDEX] = Integer.MAX_VALUE; // part2
+        Arrays.fill(distances, Integer.MAX_VALUE);
         PriorityQueue<Node> nodeQueue = new PriorityQueue<>(Comparator.comparing(Node::distanceFromStart));
         nodeQueue.add(new Node(START_NODE_INDEX, 0));
 
         while (!nodeQueue.isEmpty()) {
             Node currentNode = nodeQueue.poll();
             int currentNodeDist = currentNode.distanceFromStart();
-
             for (int currentNeighbour : MEMORY_AS_GRAPH.getAdjaccencySet(currentNode.nodeIndex())) {
-                int oldDistForNeighbour = distances[currentNeighbour] == 0 ? Integer.MAX_VALUE : distances[currentNeighbour];
                 int newDistForNeighbour = currentNodeDist + ONE_MOVE_COST;
-                if (newDistForNeighbour < oldDistForNeighbour) {
+                if (newDistForNeighbour < distances[currentNeighbour]) {
                     distances[currentNeighbour] = newDistForNeighbour;
                     nodeQueue.add(new Node(currentNeighbour, newDistForNeighbour));
                 }
