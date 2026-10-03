@@ -14,11 +14,11 @@ public class Day18 {
 
     private static final int ROWS = 71;
     private static final int COLS = 71;
-    private static final int NUMBER_OF_ALREADY_FALLEN_BYTES = 1024;
+    private static final int INITIAL_FALLEN_BYTES = 1024;
     private static final int ONE_MOVE_COST = 1;
     private static final int START_NODE_INDEX = 0;
     private static final int END_NODE_INDEX = ROWS * COLS - 1;
-    private static final List<List<Integer>> LIST_OF_ALL_POSSIBLE_FALLEN_BYTES_COORDINATES = new ArrayList<>();
+    private static final List<Coordinate> ALL_POSSIBLE_FALLEN_BYTES_COORDS = new ArrayList<>();
     private static final int[][] MATRIX_NEIGHBOURS = {
             {-1, 0}, // up
             {1, 0},  // down
@@ -30,6 +30,9 @@ public class Day18 {
 
 
     record Node(int nodeIndex, int distanceFromStart) {
+    }
+
+    record Coordinate(int row, int col) {
     }
 
     static class Graph {
@@ -72,37 +75,9 @@ public class Day18 {
     }
 
 
-    private static void prepareData(List<String> inputLines) {
-        int vertices = ROWS * COLS;
-        MEMORY_AS_GRAPH = new Graph(vertices);
-        for (int i = 0; i < vertices; i++) {
-            for (int[] neighbour : MATRIX_NEIGHBOURS) {
-                int neighbourRow = i / COLS + neighbour[0];
-                int neighbourCol = i % COLS + neighbour[1];
-                if (neighbourRow >= 0 && neighbourRow < ROWS && neighbourCol >= 0 && neighbourCol < COLS) {
-                    MEMORY_AS_GRAPH.addEdge(i, neighbourRow * COLS + neighbourCol);
-                }
-            }
-        }
-
-        int counterOfFallenBytes = 0;
-        for (String line : inputLines) {
-            String[] coords = line.split(",");
-            counterOfFallenBytes++;
-            int coordCol = Integer.parseInt(coords[0]);
-            int coordRow = Integer.parseInt(coords[1]);
-            LIST_OF_ALL_POSSIBLE_FALLEN_BYTES_COORDINATES.add(List.of(coordRow, coordCol));
-
-            if (counterOfFallenBytes <= NUMBER_OF_ALREADY_FALLEN_BYTES) {
-                int vertexIndex = coordRow * COLS + coordCol;
-                MEMORY_AS_GRAPH.removeNodeFromAdjacency(vertexIndex);
-            }
-        }
-//        System.out.println("MEMORY_AS_GRAPH = " + MEMORY_AS_GRAPH);
-    }
-
     // start with the least expensive node and using that value -> reduce (if possible) neighbours costs
     // fun fact: if move between any nodes is constant cost -> BFS is enough
+
     private static int getShortestPathWithDijkstra() {
         int[] distances = new int[ROWS * COLS];
         distances[END_NODE_INDEX] = Integer.MAX_VALUE; // part2
@@ -126,6 +101,34 @@ public class Day18 {
     }
 
 
+    private static void prepareData(List<String> inputLines) {
+        int vertices = ROWS * COLS;
+        MEMORY_AS_GRAPH = new Graph(vertices);
+        for (int i = 0; i < vertices; i++) {
+            for (int[] neighbour : MATRIX_NEIGHBOURS) {
+                int neighbourRow = i / COLS + neighbour[0];
+                int neighbourCol = i % COLS + neighbour[1];
+                if (neighbourRow >= 0 && neighbourRow < ROWS && neighbourCol >= 0 && neighbourCol < COLS) {
+                    MEMORY_AS_GRAPH.addEdge(i, neighbourRow * COLS + neighbourCol);
+                }
+            }
+        }
+        int counterOfFallenBytes = 0;
+        for (String line : inputLines) {
+            String[] coords = line.split(",");
+            counterOfFallenBytes++;
+            int coordCol = Integer.parseInt(coords[0]);
+            int coordRow = Integer.parseInt(coords[1]);
+            ALL_POSSIBLE_FALLEN_BYTES_COORDS.add(new Coordinate(coordRow, coordCol));
+            if (counterOfFallenBytes <= INITIAL_FALLEN_BYTES) {
+                int vertexIndex = coordRow * COLS + coordCol;
+                MEMORY_AS_GRAPH.removeNodeFromAdjacency(vertexIndex);
+            }
+        }
+//        System.out.println("MEMORY_AS_GRAPH = " + MEMORY_AS_GRAPH);
+    }
+
+
     private static void partOne() {
         int shortestPathSteps = getShortestPathWithDijkstra();
         System.out.println("PART I = " + shortestPathSteps);
@@ -133,10 +136,11 @@ public class Day18 {
 
 
     private static void partTwo() {
-        int allBytesSize = LIST_OF_ALL_POSSIBLE_FALLEN_BYTES_COORDINATES.size();
-        for (int i = NUMBER_OF_ALREADY_FALLEN_BYTES - 1; i < allBytesSize; i++) {
-            int currentRow = LIST_OF_ALL_POSSIBLE_FALLEN_BYTES_COORDINATES.get(i).getFirst();
-            int currentCol = LIST_OF_ALL_POSSIBLE_FALLEN_BYTES_COORDINATES.get(i).getLast();
+        int allBytesSize = ALL_POSSIBLE_FALLEN_BYTES_COORDS.size();
+        for (int i = INITIAL_FALLEN_BYTES - 1; i < allBytesSize; i++) {
+            Coordinate currentByteCoordinate = ALL_POSSIBLE_FALLEN_BYTES_COORDS.get(i);
+            int currentRow = currentByteCoordinate.row();
+            int currentCol = currentByteCoordinate.col();
             MEMORY_AS_GRAPH.removeNodeFromAdjacency(currentRow * COLS + currentCol);
             int currentShortest = getShortestPathWithDijkstra();
             if (currentShortest == Integer.MAX_VALUE) {
@@ -151,6 +155,7 @@ public class Day18 {
         List<String> inputLines = MyUtils.getInputLines(pathToFile);
 
         prepareData(inputLines);
+        applyInitialBytes();
         partOne();
         partTwo();
     }
