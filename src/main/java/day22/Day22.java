@@ -12,6 +12,7 @@ public class Day22 {
     private static final int SECOND_MULTIPLY_BY = 2048;
     private static final int DIVIDE_BY = 32;
     private static final int MODULO_BY = 16777216;
+
     private static List<Long> INITIAL_SECRET_NUMBERS;
 
 
@@ -39,14 +40,14 @@ public class Day22 {
                 .toList();
     }
 
+
     private static void partOne() {
         long sumTwoThousandThSecretNumbers = 0;
         for (long currentSecretNumber : INITIAL_SECRET_NUMBERS) {
-            long nextSecret = currentSecretNumber;
             for (int i = 0; i < TRANSFORMATIONS; i++) {
-                nextSecret = oneTransformation(nextSecret);
+                currentSecretNumber = oneTransformation(currentSecretNumber);
             }
-            sumTwoThousandThSecretNumbers += nextSecret;
+            sumTwoThousandThSecretNumbers += currentSecretNumber;
         }
         System.out.println("PART I = " + sumTwoThousandThSecretNumbers);
     }
