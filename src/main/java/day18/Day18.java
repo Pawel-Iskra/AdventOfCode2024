@@ -155,7 +155,6 @@ public class Day18 {
         List<String> inputLines = MyUtils.getInputLines(pathToFile);
 
         prepareData(inputLines);
-        applyInitialBytes();
         partOne();
         partTwo();
     }
