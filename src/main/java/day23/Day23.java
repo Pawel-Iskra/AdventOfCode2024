@@ -36,28 +36,24 @@ public class Day23 {
             adjacencySets[to].add(from);
         }
 
+        // set of three comps where each comp is connected to each other
         public Set<List<Integer>> getThreeComputersConnectionSets() {
             Set<List<Integer>> resultListSets = new HashSet<>();
-            Set<List<Integer>> twoListSets = new HashSet<>();
-            for (int i = 0; i < vertices; i++) {
-                for (int neighbour : getAdjacencySet(i)) {
-                    List<Integer> currentList = new ArrayList<>(2);
-                    currentList.add(i);
-                    currentList.add(neighbour);
-                    Collections.sort(currentList);
-                    twoListSets.add(currentList);
-                }
-            }
-            for (List<Integer> currentTwo : twoListSets) {
-                int first = currentTwo.getFirst();
-                int second = currentTwo.getLast();
-                Set<Integer> secondNeighbours = getAdjacencySet(second);
-                for (int neighbourOfFirst : getAdjacencySet(first)) {
-                    if (secondNeighbours.contains(neighbourOfFirst)) {
-                        List<Integer> resultListOfThree = new ArrayList<>(currentTwo);
-                        resultListOfThree.add(neighbourOfFirst);
-                        Collections.sort(resultListOfThree);
-                        resultListSets.add(resultListOfThree);
+            for (int vertex = 0; vertex < vertices; vertex++) {
+                List<Integer> neighbours = new ArrayList<>(getAdjacencySet(vertex));
+                int neighboursSize = neighbours.size();
+                for (int i = 0; i < neighboursSize; i++) {
+                    for (int j = i + 1; j < neighboursSize; j++) {
+                        int firstNeighbour = neighbours.get(i);
+                        int secondNeighbour = neighbours.get(j);
+                        if (getAdjacencySet(firstNeighbour).contains(secondNeighbour)) {
+                            List<Integer> resultThreeCompList = new ArrayList<>(3);
+                            resultThreeCompList.add(vertex);
+                            resultThreeCompList.add(firstNeighbour);
+                            resultThreeCompList.add(secondNeighbour);
+                            Collections.sort(resultThreeCompList);
+                            resultListSets.add(resultThreeCompList);
+                        }
                     }
                 }
             }
