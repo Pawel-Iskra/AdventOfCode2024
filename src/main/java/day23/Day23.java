@@ -3,6 +3,8 @@ package day23;
 import utils.MyUtils;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class Day23 {
 
@@ -18,9 +20,11 @@ public class Day23 {
     static class Graph {
         private final int vertices;
         private final Set<Integer>[] adjacencySets;
+        private Set<Integer> biggestClique;
 
         public Graph(int vertices) {
             this.vertices = vertices;
+            this.biggestClique = new HashSet<>();
             adjacencySets = new Set[vertices];
             for (int i = 0; i < vertices; i++) {
                 adjacencySets[i] = new HashSet<>();
@@ -58,28 +62,40 @@ public class Day23 {
         }
 
         // biggest set of comps where each comp is connected to each other
+        // Bron–Kerbosch algorithm is an enumeration algorithm for finding all maximal cliques in an undirected graph.
         public Set<Integer> getLongestCompConnectionSet() {
-            Set<Integer> result = new HashSet<>();
-            for (int vertex = 0; vertex < vertices; vertex++) {
-                Stack<Integer> vertexQueue = new Stack<>();
-                vertexQueue.add(vertex);
-                Set<Integer> currentList = new HashSet<>();
-                currentList.add(vertex);
-                while (!vertexQueue.isEmpty()) {
-                    int current = vertexQueue.pop();
-                    List<Integer> neighbours = new ArrayList<>(getAdjacencySet(current));
-                    for (int neighbour : neighbours) {
-                        if (checkIfExistInAllNeighboursInCurrentList(neighbour, currentList)) {
-                            currentList.add(neighbour);
-                            vertexQueue.add(neighbour);
-                        }
-                    }
+            Set<Integer> candidates = IntStream.range(0, vertices)
+                    .boxed()
+                    .collect(Collectors.toSet());
+            biggestClique = new HashSet<>();
+            findBiggestClique(new HashSet<>(), candidates, new HashSet<>());
+            return biggestClique;
+        }
+
+        private void findBiggestClique(
+                Set<Integer> currentClique,
+                Set<Integer> candidates,
+                Set<Integer> excluded) {
+
+            if (candidates.isEmpty() && excluded.isEmpty()) {
+                if (currentClique.size() > biggestClique.size()) {
+                    biggestClique = new HashSet<>(currentClique);
                 }
-                if (currentList.size() > result.size()) {
-                    result = new HashSet<>(currentList);
-                }
+                return;
             }
-            return result;
+
+            for (int vertex : new HashSet<>(candidates)) {
+                currentClique.add(vertex);
+                Set<Integer> newCandidates = new HashSet<>(candidates);
+                newCandidates.retainAll(getAdjacencySet(vertex));
+                Set<Integer> newExcluded = new HashSet<>(excluded);
+                newExcluded.retainAll(getAdjacencySet(vertex));
+                findBiggestClique(currentClique, newCandidates, newExcluded);
+
+                currentClique.remove(vertex);
+                candidates.remove(vertex);
+                excluded.add(vertex);
+            }
         }
 
         private boolean checkIfExistInAllNeighboursInCurrentList(int vertexToAdd, Set<Integer> currentList) {
@@ -152,7 +168,7 @@ public class Day23 {
 
 
     static void main() {
-        String pathToFile = "src/main/resources/2024.day23/input1.txt";
+        String pathToFile = "src/main/resources/2024.day23/input.txt";
         List<String> inputLines = MyUtils.getInputLines(pathToFile);
 
         prepareData(inputLines);
