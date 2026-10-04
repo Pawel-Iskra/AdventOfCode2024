@@ -57,6 +57,38 @@ public class Day23 {
             return resultListSets;
         }
 
+        // biggest set of comps where each comp is connected to each other
+        public Set<Integer> getLongestCompConnectionSet() {
+            Set<Integer> result = new HashSet<>();
+            for (int vertex = 0; vertex < vertices; vertex++) {
+                Stack<Integer> vertexQueue = new Stack<>();
+                vertexQueue.add(vertex);
+                Set<Integer> currentList = new HashSet<>();
+                currentList.add(vertex);
+                while (!vertexQueue.isEmpty()) {
+                    int current = vertexQueue.pop();
+                    List<Integer> neighbours = new ArrayList<>(getAdjacencySet(current));
+                    for (int neighbour : neighbours) {
+                        if (checkIfExistInAllNeighboursInCurrentList(neighbour, currentList)) {
+                            currentList.add(neighbour);
+                            vertexQueue.add(neighbour);
+                        }
+                    }
+                }
+                if (currentList.size() > result.size()) {
+                    result = new HashSet<>(currentList);
+                }
+            }
+            return result;
+        }
+
+        private boolean checkIfExistInAllNeighboursInCurrentList(int vertexToAdd, Set<Integer> currentList) {
+            for (Integer neighbour : currentList) {
+                if (!getAdjacencySet(neighbour).contains(vertexToAdd)) return false;
+            }
+            return true;
+        }
+
         @Override
         public String toString() {
             StringBuilder strb = new StringBuilder();
@@ -105,12 +137,22 @@ public class Day23 {
 
 
     private static void partTwo() {
-
+        StringBuilder passwordBuilder = new StringBuilder();
+        Set<Integer> longestCompConnectionSet = CONNECTION_GRAPH.getLongestCompConnectionSet();
+        List<String> compNameList = longestCompConnectionSet.stream()
+                .map(vertex -> COMP_LIST.get(vertex))
+                .sorted()
+                .toList();
+        for (String name : compNameList) {
+            passwordBuilder.append(name).append(",");
+        }
+        passwordBuilder.deleteCharAt(passwordBuilder.length() - 1);
+        System.out.println("Part II = " + passwordBuilder);
     }
 
 
     static void main() {
-        String pathToFile = "src/main/resources/2024.day23/input.txt";
+        String pathToFile = "src/main/resources/2024.day23/input1.txt";
         List<String> inputLines = MyUtils.getInputLines(pathToFile);
 
         prepareData(inputLines);
