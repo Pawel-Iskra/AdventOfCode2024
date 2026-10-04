@@ -47,10 +47,7 @@ public class Day23 {
                         int firstNeighbour = neighbours.get(i);
                         int secondNeighbour = neighbours.get(j);
                         if (getAdjacencySet(firstNeighbour).contains(secondNeighbour)) {
-                            List<Integer> resultThreeCompList = new ArrayList<>(3);
-                            resultThreeCompList.add(vertex);
-                            resultThreeCompList.add(firstNeighbour);
-                            resultThreeCompList.add(secondNeighbour);
+                            List<Integer> resultThreeCompList = new ArrayList<>(List.of(vertex, firstNeighbour, secondNeighbour));
                             Collections.sort(resultThreeCompList);
                             resultListSets.add(resultThreeCompList);
                         }
@@ -107,12 +104,18 @@ public class Day23 {
     }
 
 
+    private static void partTwo() {
+
+    }
+
+
     static void main() {
         String pathToFile = "src/main/resources/2024.day23/input.txt";
         List<String> inputLines = MyUtils.getInputLines(pathToFile);
 
         prepareData(inputLines);
         partOne();
+        partTwo();
     }
 
 }
